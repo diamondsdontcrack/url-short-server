@@ -4,7 +4,7 @@ import Urls, { CreateUrlsModelAttributes } from "../models/Urls";
 export default class DatabaseService {
   private connection!: Sequelize;
   // *NOTE: Singleton pattern
-  private service!: DatabaseService
+  private static service: DatabaseService
 
 
   private constructor() {
@@ -21,7 +21,7 @@ export default class DatabaseService {
     }
   }
 
-  public get instance(): DatabaseService {
+  public static get instance(): DatabaseService {
     if (this.service === undefined) {
       this.service = new DatabaseService()
     }

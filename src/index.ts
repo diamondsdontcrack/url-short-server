@@ -2,6 +2,7 @@ import express from 'express'
 import accessShortUrlHandler from './handlers/access-short-url'
 import createShortUrlHandler from './handlers/create-short-urls'
 import getShortUrlStatsHandler from './handlers/get-short-url-statistics'
+import DatabaseService from './services/database'
 // const express = require('express') 
 // const fs = require('fs')
 
@@ -33,6 +34,8 @@ const app = express()
 //       }
 //     })
 //   })
+
+DatabaseService.instance
 
 app.use(express.json())
 app.post('/short-urls', createShortUrlHandler)

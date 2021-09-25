@@ -1,4 +1,4 @@
-const ID_CHARACTEER_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const ID_CHARACTEER_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890"
 
 export function generateRandomId(): string {
 

@@ -1,4 +1,5 @@
 import { Request, Response } from "express"
+import { ValidationError } from "sequelize"
 import { BaseSuccessResponseBody, FailResponseBody } from "../dto/response"
 import { generateRandomId, validateIdCharacters } from "../helpers/id"
 import { getShortenedUrlFromId } from "../helpers/url"
@@ -66,9 +67,19 @@ export default async function createShortUrlHandler(
       }
     })
   } catch (e) {
+
+    if (e instanceof ValidationError && e.errors[0].message === "id must be unique") {
+      res.status(409).send({
+        code: "fail",
+        error: { message: "id-reserved" }
+      })
+      return
+    }
+
     res.status(500).send({
       code: 'fail',
       error: { message: e instanceof Error ? e.message : 'unhandled-exception' }
     })
+    return
   }
 }
