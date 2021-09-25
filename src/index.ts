@@ -1,6 +1,7 @@
 import express, { Response, Request } from 'express'
 import fs from 'fs'
 import { register } from 'ts-node'
+import { BaseSuccfessResponseBody, FailResponseBody } from './dto/response'
 import { generateRandomId, validateIdCharacters } from './helpers/id'
 import DatabaseService from './services/database'
 // const express = require('express') 
@@ -44,21 +45,16 @@ interface CreateShortUrlRequestBody {
   originalUrl: string
 }
 
-interface SuccessCreateShortUrlResponseBody {
-  code: 'success'
+type  SuccessCreateShortUrlResponseBody = BaseSuccfessResponseBody <{
   originalUrl: string
   shortenedUrl: string
-}
+}>
 
-interface FailCreateShortUrlResponseBody {
-  code: 'fail'
-  error: { message: string }
-}
 
-type CreateShortUrlResponseBody = SuccessCreateShortUrlResponseBody | FailCreateShortUrlResponseBody
+type CreateShortUrlResponseBody = SuccessCreateShortUrlResponseBody | FailResponseBody
 
 app.post('/short-urls', async (
-  req: Request<{}, CreateShortUrlResponseBody, CreateShortUrlRequestBody>,
+  req: Request<Record<never, never>, CreateShortUrlResponseBody, CreateShortUrlRequestBody>,
   res: Response<CreateShortUrlResponseBody>,
 ) => {
 
@@ -100,8 +96,10 @@ app.post('/short-urls', async (
 
     res.status(201).send({
       code: 'success',
-      originalUrl: req.body.originalUrl,
-      shortenedUrl: `http://localhost:8000/${id}`
+      data: {
+        originalUrl: req.body.originalUrl,
+        shortenedUrl: `http://localhost:8000/${id}`
+      }
     })
   } catch (e) {
     res.status(500).send({
@@ -115,14 +113,9 @@ interface AccessShortUrlRequestPathParameter {
   id: string
 }
 
-interface FailAccessShortUrlRequestPathParameter {
-  code: 'fail'
-  error: { message: string }
-}
-
 app.get('/:id', async (
-  req: Request<AccessShortUrlRequestPathParameter, FailAccessShortUrlRequestPathParameter, never>, 
-  res: Response<FailAccessShortUrlRequestPathParameter>
+  req: Request<AccessShortUrlRequestPathParameter, FailResponseBody, never>, 
+  res: Response<FailResponseBody>
 ) => {
   // const id = req.params.id
   const { id } = req.params // --> it's called "destructuring pattern"
@@ -146,23 +139,16 @@ interface GetShortUrlStatisticsRequestPathParameters {
   id: string
 }
 
-interface SuccessGetShortUrlStatisticsResponseBody {
-  code: 'success'
-  data: {
-    createdAt: string
-    isCustom: boolean
-    originalUrl: string
-    shortUrl: string
-    visitCount: number
-  }
-}
+type SuccessGetShortUrlStatisticsResponseBody = BaseSuccfessResponseBody <{
+  createdAt: string
+  isCustom: boolean
+  originalUrl: string
+  shortUrl: string
+  visitCount: number
+}>
 
-interface FailGetShortUrlStatisticsResponseBody {
-  code: 'fail'
-  error: { message: string }
-}
 
-type GetShortUrlStatisticsResponseBody = SuccessGetShortUrlStatisticsResponseBody | FailGetShortUrlStatisticsResponseBody
+type GetShortUrlStatisticsResponseBody = SuccessGetShortUrlStatisticsResponseBody | FailResponseBody
 
 app.get('/:id/stats', async (
   req: Request<GetShortUrlStatisticsRequestPathParameters, GetShortUrlStatisticsResponseBody, never>, 
