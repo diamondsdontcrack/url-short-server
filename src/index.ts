@@ -1,7 +1,7 @@
-import express, { Response, Request, application } from 'express'
+import express, { Response, Request } from 'express'
 import fs from 'fs'
 import { register } from 'ts-node'
-import { generateRandomId, validateCustomId } from './helpers/id'
+import { generateRandomId, validateIdCharacters } from './helpers/id'
 import DatabaseService from './services/database'
 // const express = require('express') 
 // const fs = require('fs')
@@ -83,7 +83,7 @@ app.post('/short-urls', async (
         error: { message: 'id-is-too-long'}
       })
       return
-    } else if (!validateCustomId(req.body.id)) {
+    } else if (!validateIdCharacters(req.body.id)) {
       res.status(400).send({
         code: 'fail',
         error: { message: 'id-must-be-alphanumeric'}
@@ -139,7 +139,7 @@ app.get('/:id', async (
   
   await db.incrementUrlVisitCount(id)
 
-  res.status(303).header('Location', url.getDataValue('originalUrl')).send()
+  res.status(303).header('Location', url.originalUrl).send()
 })
 
 interface GetShortUrlStatisticsRequestPathParameters {
@@ -183,11 +183,11 @@ app.get('/:id/stats', async (
   res.status(200).send({
     code: 'success',
     data: {
-      createdAt: url.getDataValue('createdAt').toString(),
-      isCustom: url.getDataValue('isCustom'),
-      originalUrl: url.getDataValue('originalUrl'),
+      createdAt: url.createdAt.toString(),
+      isCustom: url.isCustom,
+      originalUrl: url.originalUrl,
       shortUrl: `http://localhost:8000/${id}`,
-      visitCount: url.getDataValue('visitCount'),
+      visitCount: url.visitCount,
     }
   })
   }

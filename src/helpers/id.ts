@@ -2,14 +2,19 @@ const ID_CHARACTEER_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 export function generateRandomId(): string {
 
-  const length: number = 5 + Math.floor(Math.random() * 4)
-  let id = ""
+  // const length: number = 5 + Math.floor(Math.random() * 4)
+  // let id = ""
 
-  for (let i = 0; i < length; i++)
-  {
-    id = id + ID_CHARACTEER_SET[Math.floor(Math.random() * ID_CHARACTEER_SET.length)]
-  }
-  return id;
+  // for (let i = 0; i < length; i++)
+  // {
+  //   id = id + ID_CHARACTEER_SET[Math.floor(Math.random() * ID_CHARACTEER_SET.length)]
+  // }
+  // return id;
+
+  return new Array(5 + Math.floor(Math.random() * 4))
+    .map(() => ID_CHARACTEER_SET[Math.floor(Math.random() * ID_CHARACTEER_SET.length)])
+    .join("")
+
 }
 
 export function validateCustomId(id: string): boolean {
@@ -21,4 +26,8 @@ export function validateCustomId(id: string): boolean {
   }
   
   return true
+}
+
+export function validateIdCharacters(candidateId: string): boolean {
+  return candidateId.split("").every((char) => ID_CHARACTEER_SET.includes(char))
 }

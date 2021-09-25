@@ -1,12 +1,5 @@
-import { DataTypes, DATE, Sequelize } from "sequelize";
-
-// insert into 
-// TODO: Move this to models/Urls
-export interface CreateShortUrlData {
-  id: string
-  originalUrl: string
-  isCustom: Boolean
-}
+import { Sequelize } from "sequelize";
+import Urls, { CreateUrlsModelAttributes } from "../models/Urls";
 
 export default class DatabaseService {
   private connection!: Sequelize;
@@ -25,60 +18,21 @@ export default class DatabaseService {
     }
   }
 
-  // TODO: Move this to models/Urls
-  private initializeModels() {
-    this.connection.define("urls", {
-      id: {
-        primaryKey: true,
-        type: DataTypes.STRING(128),
-      },
-      originalUrl: {
-        allowNull: false,
-        type: DataTypes.STRING(2_408),
-        field: "original_url"
-      },
-      isCustom: {
-        allowNull: false,
-        type: DataTypes.BOOLEAN,
-        field: "is_custom"
-      },
-      visitCount: {
-        allowNull: false,
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-        validate: {min: 0},
-        field: "visit_count"
-      },
-      createdAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.fn("DATETIME"),
-        field: "created_at"
-      },
-      updatedAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.fn("DATETIME"),
-        field: "updated_at"
-      },
-      deletedAt: {
-        allowNull: true,
-        type: DataTypes.DATE,
-        field: "deleted_at"
-      },
-    })
+
+  private initializeModels(): void {
+    Urls.init(Urls.getAttributes(), { sequelize: this.connection})
   }
 
-  public async insertUrl(data :CreateShortUrlData) {
-    this.connection.models.urls.create(data)
+  public async insertUrl(data :CreateUrlsModelAttributes): Promise<Urls> {
+    return Urls.create<Urls>(data)
   }
 
-  public async getUrl(id: string) {
-    return this.connection.models.urls.findByPk(id)
+  public async getUrl(id: string): Promise<Urls | null> {
+    return Urls.findByPk<Urls>(id)
   }
 
-  public async incrementUrlVisitCount(id:string) {
-    return this.connection.models.urls.increment("visitCount", {
+  public async incrementUrlVisitCount(id:string): Promise<Urls> {
+    return Urls.increment<Urls>("visitCount", {
       by: 1,
       where: { id }
     })
