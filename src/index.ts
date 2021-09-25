@@ -1,14 +1,11 @@
-import express, { Response, Request } from 'express'
-import fs from 'fs'
-import { register } from 'ts-node'
-import { BaseSuccfessResponseBody, FailResponseBody } from './dto/response'
-import { generateRandomId, validateIdCharacters } from './helpers/id'
-import DatabaseService from './services/database'
+import express from 'express'
+import accessShortUrlHandler from './handlers/access-short-url'
+import createShortUrlHandler from './handlers/create-short-urls'
+import getShortUrlStatsHandler from './handlers/get-short-url-statistics'
 // const express = require('express') 
 // const fs = require('fs')
 
 const app = express()
-const db = new DatabaseService()
 
 // app.get('/', (req, res) => {
 //   try {
@@ -38,147 +35,10 @@ const db = new DatabaseService()
 //   })
 
 app.use(express.json())
-
-
-interface CreateShortUrlRequestBody {
-  id?: string
-  originalUrl: string
-}
-
-type  SuccessCreateShortUrlResponseBody = BaseSuccfessResponseBody <{
-  originalUrl: string
-  shortenedUrl: string
-}>
-
-
-type CreateShortUrlResponseBody = SuccessCreateShortUrlResponseBody | FailResponseBody
-
-app.post('/short-urls', async (
-  req: Request<Record<never, never>, CreateShortUrlResponseBody, CreateShortUrlRequestBody>,
-  res: Response<CreateShortUrlResponseBody>,
-) => {
-
-  if (typeof req.body.originalUrl !== 'string') {
-    res.status(400).send({
-      code: 'fail',
-      error: { message: 'invalid-original-url' }
-    })
-    return
-  }
-
-  if (typeof req.body.id === 'string'){
-    if (req.body.id.length < 5) {
-      res.status(400).send({
-        code: 'fail',
-        error: { message: 'id-is-too-short'}
-      })
-      return
-    } else if (req.body.id.length > 128) {
-      res.status(400).send({
-        code: 'fail',
-        error: { message: 'id-is-too-long'}
-      })
-      return
-    } else if (!validateIdCharacters(req.body.id)) {
-      res.status(400).send({
-        code: 'fail',
-        error: { message: 'id-must-be-alphanumeric'}
-      })
-      return
-    }
-  }
-
-  try {
-    const isCustom = typeof req.body.id === 'string'
-    const id = typeof req.body.id === 'string' ? req.body.id : generateRandomId()
-
-    await db.insertUrl({ id, isCustom, originalUrl: req.body.originalUrl })
-
-    res.status(201).send({
-      code: 'success',
-      data: {
-        originalUrl: req.body.originalUrl,
-        shortenedUrl: `http://localhost:8000/${id}`
-      }
-    })
-  } catch (e) {
-    res.status(500).send({
-      code: 'fail',
-      error: { message: e instanceof Error ? e.message : 'unhandled-exception' }
-    })
-  }
-})
-
-interface AccessShortUrlRequestPathParameter {
-  id: string
-}
-
-app.get('/:id', async (
-  req: Request<AccessShortUrlRequestPathParameter, FailResponseBody, never>, 
-  res: Response<FailResponseBody>
-) => {
-  // const id = req.params.id
-  const { id } = req.params // --> it's called "destructuring pattern"
-  
-  const url = await db.getUrl(id)
-
-  if ( url === null){
-    res.status(404).send({
-      code: 'fail',
-      error: { message: 'not-found' }
-    })
-    return
-  } 
-  
-  await db.incrementUrlVisitCount(id)
-
-  res.status(303).header('Location', url.originalUrl).send()
-})
-
-interface GetShortUrlStatisticsRequestPathParameters {
-  id: string
-}
-
-type SuccessGetShortUrlStatisticsResponseBody = BaseSuccfessResponseBody <{
-  createdAt: string
-  isCustom: boolean
-  originalUrl: string
-  shortUrl: string
-  visitCount: number
-}>
-
-
-type GetShortUrlStatisticsResponseBody = SuccessGetShortUrlStatisticsResponseBody | FailResponseBody
-
-app.get('/:id/stats', async (
-  req: Request<GetShortUrlStatisticsRequestPathParameters, GetShortUrlStatisticsResponseBody, never>, 
-  res: Response<GetShortUrlStatisticsResponseBody>
-  ) => {
-  const { id } = req.params
-
-  const url = await db.getUrl(id)
-
-  if ( url === null){
-    res.status(404).send({
-      code: 'fail',
-      error: { message: 'not-found' }
-    })
-    return
-  } 
-
-  res.status(200).send({
-    code: 'success',
-    data: {
-      createdAt: url.createdAt.toString(),
-      isCustom: url.isCustom,
-      originalUrl: url.originalUrl,
-      shortUrl: `http://localhost:8000/${id}`,
-      visitCount: url.visitCount,
-    }
-  })
-  }
-)
-
+app.post('/short-urls', createShortUrlHandler)
+app.get('/:id', accessShortUrlHandler)
+app.get('/:id/stats', getShortUrlStatsHandler)
+app.listen(8000)
 
 // * NOTES
 // The get method not intent to read the body
@@ -193,5 +53,3 @@ app.get('/:id/stats', async (
 //    locales >
 // never --> never caught any type
 // any --> caught every type
-
-app.listen(8000)

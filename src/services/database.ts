@@ -3,8 +3,11 @@ import Urls, { CreateUrlsModelAttributes } from "../models/Urls";
 
 export default class DatabaseService {
   private connection!: Sequelize;
+  // *NOTE: Singleton pattern
+  private service!: DatabaseService
 
-  constructor() {
+
+  private constructor() {
     try {
       this.connection = new Sequelize({
         dialect: "sqlite",
@@ -18,6 +21,12 @@ export default class DatabaseService {
     }
   }
 
+  public get instance(): DatabaseService {
+    if (this.service === undefined) {
+      this.service = new DatabaseService()
+    }
+    return this.service
+  }
 
   private initializeModels(): void {
     Urls.init(Urls.getAttributes(), { sequelize: this.connection})
